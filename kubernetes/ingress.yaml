@@ -5,11 +5,26 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-1-2017-01
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:702869016680:certificate/c37cd9a5-867b-4fbf-b75e-499cd3b7f6cc
+    # alb.ingress.kubernetes.io/actions.hello-kubernetes: >
+    #     {"type":"redirect","redirectConfig":{"host":"#{host}","path":"/#{path}","port":"443","protocol":"HTTPS","query":"#{query}","statusCode":"HTTP_301"}}
+    alb.ingress.kubernetes.io/actions.hello-kubernetes: '{"Type": "redirect", "RedirectConfig": { "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    external-dns.alpha.kubernetes.io/hostname: hello-kubernetes.awamo360.com
+    external-dns.alpha.kubernetes.io/ttl: '60'
 spec:
   rules:
     - http:
         paths:
-          - path: /
+          - path: /*
+            backend:
+              serviceName: hello-kubernetes
+              servicePort: use-annotation
+          - path: /*
             backend:
               serviceName: hello-kubernetes
               servicePort: 80
+              

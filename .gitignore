@@ -4,3 +4,6 @@ terraform.tfstate.*.backup
 .terraform.tfstate.lock.info
 kubeconfig*
 .terraform
+metrics-server-0.3.6
+01_terraform_eks/v0.3.6.tar.gz
+kubeconfig_my-cluster
