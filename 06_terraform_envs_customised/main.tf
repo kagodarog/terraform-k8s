@@ -1,17 +1,20 @@
 module "dev_cluster" {
   source        = "./cluster"
-  cluster_name  = "dev"
-  instance_type = "t2.micro"
+  cluster_name  = "test"
+  name = "tpe-vpc"
+  instance_types = "t2.micro"
 }
 
 module "staging_cluster" {
   source        = "./cluster"
-  cluster_name  = "staging"
-  instance_type = "t2.micro"
+  cluster_name  = "uat"
+  instance_types = "t2.micro"
+  name = "uat-vpc"
 }
 
 module "production_cluster" {
   source        = "./cluster"
   cluster_name  = "production"
-  instance_type = "m5.large"
+  name = "prod-vpc"
+  instance_types = "t2.micro"
 }
