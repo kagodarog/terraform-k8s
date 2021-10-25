@@ -62,12 +62,12 @@ module "vpc" {
   private_subnet_suffix = "private"
 
   public_subnet_tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/cluster/eks-${var.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                    = "1"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/cluster/eks-${var.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"           = "1"
   }
 }
@@ -89,7 +89,7 @@ module "eks" {
   enable_irsa = true
   write_kubeconfig   = true
   kubeconfig_output_path = "./"
-  cluster_enabled_log_types = ["api","authenticator", "audit"]
+  #cluster_enabled_log_types = ["api","authenticator", "audit"]
   map_users   = var.map_users
   manage_aws_auth       = true
   cluster_endpoint_private_access = "true"
@@ -97,22 +97,65 @@ module "eks" {
   kubeconfig_aws_authenticator_command = "aws"
   kubeconfig_aws_authenticator_command_args = ["eks", "get-token", "--cluster-name", var.cluster_name]
   kubeconfig_aws_authenticator_env_variables = {AWS_PROFILE = "mp"}
-  workers_additional_policies = [aws_iam_policy.worker_policy.arn]
+  workers_additional_policies = [aws_iam_policy.worker_policy.arn, data.aws_iam_policy.EC2RoleforSSM.arn]
 
-worker_groups = [
+  worker_groups_launch_template = [
     {
-      name                          = "worker-group-1"
-      instance_type                 = "t3.medium"
-      additional_userdata           = "echo foo bar"
-      asg_desired_capacity          = 2
+      name                    = join("-", ["eks-on-demand", var.cluster_name])
+      override_instance_types = ["t3.medium", "t3.large"]
+     # spot_instance_pools     = 2 // how many spot pools per az, len matches instances types len
+      asg_max_size            = 1
+      asg_max_size            = 5
+      asg_desired_capacity    = 2
+    #  ami_id                     = "ami-0b97f860a851277b3"
+    #  kubelet_extra_args      = "--node-labels=kubernetes.io/lifecycle=spot"
+      autoscaling_enabled     = true
+      bootstrap_extra_args    = "--use-max-pods false --container-runtime containerd"
       additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
-
+      additional_userdata           = <<EOF
+               cd /tmp 
+               sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+               sudo systemctl enable amazon-ssm-agent 
+               sudo systemctl start amazon-ssm-agent
+               INSTANCEID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+               REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document | grep region|awk -F\" '{print $4}'`
+               aws ec2 modify-instance-attribute --instance-id $INSTANCEID --no-source-dest-check --region $REGION
+               EOF
       update_config = {
-        max_unavailable_percentage = 50 # or set `max_unavailable`
+         max_unavailable_percentage = 50 # or set `max_unavailable`
+         }
+      protect_from_scale_in   = false
+      tags = [
+      {
+        "key"                 = "tier"
+        "propagate_at_launch" = "true"
+        "value"               = "apps"
       }
-    }
+    ]
+    },
   ]
-}
+
+
+
+  # worker_groups = [
+  #     {
+  #       name                          = "worker-group-1"
+  #       instance_type                 = "t3.medium"
+  #       additional_userdata           = <<EOF
+  #             cd /tmp 
+  #             sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+  #             sudo systemctl enable amazon-ssm-agent 
+  #             sudo systemctl start amazon-ssm-agent
+  #             EOF
+  #       asg_desired_capacity          = 2
+  #       additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
+
+  #       update_config = {
+  #         max_unavailable_percentage = 50 # or set `max_unavailable`
+  #       }
+  #     }
+  #   ]
+  }
 
 resource "aws_security_group" "worker_group_mgmt_one" {
   name_prefix = "worker_group_mgmt_one"
@@ -127,6 +170,10 @@ resource "aws_security_group" "worker_group_mgmt_one" {
       "10.0.0.0/16",
     ]
   }
+}
+
+data "aws_iam_policy" "EC2RoleforSSM" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
 }
 
 resource "aws_iam_policy" "worker_policy" {
@@ -149,12 +196,9 @@ resource "helm_release" "ingress" {
   chart      = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   version    = "1.2.7"
-  depends_on = [
-    
-  ]
   set {
     name  = "clusterName"
-    value = var.cluster_name
+    value = join("-", ["eks",var.cluster_name])
   }
 
   set {
@@ -166,5 +210,22 @@ resource "helm_release" "ingress" {
     name  = "serviceAccount.name"
     value = "aws-load-balancer-controller"
   }
+
+  set {
+    name  = "hostNetwork"
+    value = true
+  }
 }
 
+resource "helm_release" "prometheus_monitor" {
+  name       = "prometheus"
+  chart      = "kube-prometheus-stack"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  version    = "19.2.2" 
+  namespace = "default"
+
+   set {
+    name  = "hostNetwork"
+    value = true
+  }
+}

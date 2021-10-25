@@ -17,3 +17,8 @@ At the end you will have:
 1. A cluster for production.
 
 In the same folder you will find a kubeconfig file for each cluster.
+
+
+install calico in eks
+wget https://docs.projectcalico.org/manifests/calico-vxlan.yaml
+kubectl apply -f calico-vxlan.yaml
