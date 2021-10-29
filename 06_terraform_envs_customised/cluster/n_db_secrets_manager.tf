@@ -4,21 +4,16 @@ resource "random_password" "master"{
   override_special = "_!%^"
 }
 
-variable "name" {
-  default = "monkeypesa-init-db"
-}
 
 locals {
   name   = "test-mysql"
-  region = "af-south-1"
   tags = {
     Owner       = "user"
-    Environment = "dev"
   }
 }
 
 resource "aws_secretsmanager_secret" "password" {
-  name = "dev-db-password-secret"
+  name = "db-password-secret-${var.cluster_name}"
   description = "db password secret"
   replica  {
     region = "eu-central-1"

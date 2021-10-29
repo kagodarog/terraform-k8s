@@ -1,19 +1,14 @@
 data "aws_secretsmanager_secret" "password" {
-  name = "dev-db-password-secret"
-
+  name = "db-password-secret-${var.cluster_name}"
 }
 
 data "aws_secretsmanager_secret_version" "password" {
   secret_id = data.aws_secretsmanager_secret.password.id
 }
 
-# output "secret_password_value" {
-#   value = jsondecode(data.aws_secretsmanager_secret_version.password.secret_string)["key1"]
-# }
-
 resource "aws_security_group" "db-security-gp" {
   description = "rds db security group"
-  name = "test-db-security-group" 
+  name = "db-security-group-${var.cluster_name}" 
   vpc_id = module.vpc.vpc_id
 
   ingress  {
@@ -37,7 +32,7 @@ module "db" {
   source  = "terraform-aws-modules/rds/aws"
   version = "~> 3.0"
 
-  identifier = var.name
+  identifier = var.db_name
 
   engine            = "mysql"
   engine_version    = "5.7.33"
@@ -51,16 +46,17 @@ module "db" {
   port     = "3306"
 
   storage_encrypted = true
+  backup_retention_period = var.backup_retention_period
 
   maintenance_window = "Mon:00:00-Mon:03:00"
   backup_window      = "03:00-06:00"
   enabled_cloudwatch_logs_exports = ["audit", "general"]
+  multi_az           = var.multiaz
   
-
   # Enhanced Monitoring - see example for details on how to create the role
   # by yourself, in case you don't want to create it automatically
-  monitoring_interval = "30"
-  monitoring_role_name = "MyRDSMonitoringRole"
+  monitoring_interval = 30
+  monitoring_role_name = "MyRDSMonitoringRole-${var.cluster_name}"
   create_monitoring_role = true
 
   tags = local.tags
@@ -78,6 +74,8 @@ module "db" {
 
   # Database Deletion Protection
   deletion_protection = true
+
+  apply_immediately = true
 
   parameters = [
     {
