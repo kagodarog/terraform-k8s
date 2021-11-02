@@ -10,7 +10,8 @@ terraform {
 module "dev_cluster" {
   source        = "./cluster"
   cluster_name  = "dev"
-  asg_min_size  = 3
+  asg_min_size  = 2
+  asg_desired_capacity = 3
   instance_types      = ["t3.medium", "t3.large"]
   cluster_version = "1.20"
   
@@ -45,17 +46,17 @@ module "production_cluster" {
 
 # }
 
-output "cluster_id" {
+output "dev_cluster_id" {
   description = "EKS cluster ID."
   value       = module.dev_cluster.cluster_id
 }
 
-output "cluster_endpoint" {
+output "dev_cluster_endpoint" {
   description = "Endpoint for EKS control plane."
   value       = module.dev_cluster.cluster_endpoint
 }
 
-output "cluster_security_group_id" {
+output "dev_cluster_security_group_id" {
   description = "Security group ids attached to the cluster control plane."
   value       = module.dev_cluster.cluster_security_group_id
 }
@@ -71,46 +72,46 @@ output "cluster_security_group_id" {
 # }
 
 
-output "cluster_name" {
+output "dev_cluster_name" {
   description = "Kubernetes Cluster Name"
   value       = module.dev_cluster.cluster_name
 }
 
 # VPC
-output "vpc_id" {
+output "dev_vpc_id" {
   description = "The ID of the VPC"
   value       = module.dev_cluster.vpc_id
 }
 
 # Subnets
-output "private_subnets" {
+output "dev_private_subnets" {
   description = "List of IDs of private subnets"
   value       = module.dev_cluster.private_subnets
 }
 
-output "public_subnets" {
+output "dev_public_subnets" {
   description = "List of IDs of public subnets"
   value       = module.dev_cluster.public_subnets
 }
 
 # NAT gateways
-output "nat_public_ips" {
+output "dev_nat_public_ips" {
   description = "List of public Elastic IPs created for AWS NAT Gateway"
   value       = module.dev_cluster.nat_public_ips
 }
 
 #RDS
-output "db_instance_id" {
+output "dev_db_instance_id" {
     description = "database instance id"
     value = module.dev_cluster.db_instance_id
 }
 
-output "db_instance_host_address" {
+output "dev_db_instance_host_address" {
   description = "rds db host instance address"
   value = module.dev_cluster.db_instance_address
 }
 
-output "db_instance_host_endpoint" {
+output "dev_db_instance_host_endpoint" {
   description = "rds db host instance endpoint"
   value = module.dev_cluster.db_instance_host_endpoint
 }

@@ -17,9 +17,7 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = true
-  config_path = "kubeconfig_eks-dev"
-  config_context =  data.aws_eks_cluster.cluster.arn
+ # load_config_file       = true
 }
 
 data "aws_availability_zones" "available" {
@@ -89,7 +87,7 @@ module "eks" {
       autoscaling_enabled     = true
       on_demand_base_capacity = "${var.on_demand_base_capacity}"
       on_demand_percentage_above_base_capacity = "${var.on_demand_base_capacity_above}"
-      bootstrap_extra_args    = "--container-runtime containerd"
+      #bootstrap_extra_args    = "--container-runtime containerd"
       public_ip               = false
       root_encrypted          = true
       root_volume_size        = 25
@@ -168,7 +166,7 @@ data "aws_iam_policy" "EC2RoleforSSM" {
 
 
 resource "aws_iam_policy" "eks_policy_alb_controller_ingress" {
-  name      = "eks_sa_alb_controller_ingress-${var.cluster_name}"
+  name      = "eks_sa_alb_controller_ingress-k8-${var.cluster_name}"
   description  = "service account policy for aws-load-balancer-controller"
   policy  = file("iam-policy.json")
   }  
