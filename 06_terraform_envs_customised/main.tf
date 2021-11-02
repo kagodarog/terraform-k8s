@@ -10,6 +10,7 @@ terraform {
 module "dev_cluster" {
   source        = "./cluster"
   cluster_name  = "dev"
+  asg_min_size  = 3
   instance_types      = ["t3.medium", "t3.large"]
   
 }

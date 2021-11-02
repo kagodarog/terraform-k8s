@@ -65,7 +65,7 @@ module "eks" {
   enable_irsa = true
   write_kubeconfig   = true
   kubeconfig_output_path = "./"
-  #cluster_enabled_log_types = ["api","authenticator", "audit"]
+  cluster_enabled_log_types = ["api","authenticator", "controllerManager"]
   map_users   = var.map_users
   manage_aws_auth       = true
   cluster_endpoint_private_access = "true"
@@ -91,7 +91,7 @@ module "eks" {
       public_ip               = false
       root_encrypted          = true
       root_volume_size        = 25
-      kubelet_extra_args      = "--node-labels=node.kubernetes.io/lifecycle=`curl -s http://169.254.169.254/latest/meta-data/instance-life-cycle`"
+    #  kubelet_extra_args      = "--node-labels=node.kubernetes.io/lifecycle=`curl -s http://169.254.169.254/latest/meta-data/instance-life-cycle`"
      # additional_security_group_ids = [aws_security_group.worker_group_mgmt_one.id]
       additional_userdata           = <<EOF
                cd /tmp 
