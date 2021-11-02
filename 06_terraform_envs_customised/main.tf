@@ -12,6 +12,7 @@ module "dev_cluster" {
   cluster_name  = "dev"
   asg_min_size  = 3
   instance_types      = ["t3.medium", "t3.large"]
+  cluster_version = "1.20"
   
 }
 
@@ -36,6 +37,7 @@ module "production_cluster" {
   on_demand_base_capacity= 2
   on_demand_base_capacity_above = 25
   instance_types      = ["t3.medium", "t3.large", "m5.large"]
+  cluster_version = "1.20"
 }
 
 # locals {

@@ -17,7 +17,9 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
+  load_config_file       = true
+  config_path = "kubeconfig_eks-dev"
+  config_context =  data.aws_eks_cluster.cluster.arn
 }
 
 data "aws_availability_zones" "available" {
@@ -52,8 +54,8 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "17.22.0"
 
-  cluster_name    = "eks-${var.cluster_name}"
-  cluster_version = "1.21"
+  cluster_name    = "eks-k8-${var.cluster_name}"
+  cluster_version = var.cluster_version
   subnets         = module.vpc.private_subnets
 
   vpc_id = module.vpc.vpc_id
@@ -237,15 +239,10 @@ resource "helm_release" "ingress" {
   }
 }
 
-# resource "helm_release" "prometheus_monitors" {
-#   name       = "prometheus"
-#   chart      = "kube-prometheus-stack"
-#   repository = "https://prometheus-community.github.io/helm-charts"
-#   version    = "19.2.2" 
-#   namespace = "kube-system"
-
-#    set {
-#     name  = "hostNetwork"
-#     value = true
-#   }
-# }
+resource "helm_release" "prometheus_monitors" {
+  name       = "prometheus"
+  chart      = "kube-prometheus-stack"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  version    = "19.2.2" 
+  namespace = "default"
+}

@@ -4,6 +4,10 @@ variable "aws_region" {
   default = "af-south-1"
 }
 
+variable "cluster_version" {
+  default = "1.21"
+}
+
 variable "local_aws_profile" {
   default = "mp"
 }
