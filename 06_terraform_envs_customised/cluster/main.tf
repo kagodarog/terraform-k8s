@@ -153,10 +153,6 @@ module "eks" {
 #   }
 # }
 
-data "aws_iam_policy" "EC2RoleforSSM" {
-  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
-}
-
 # resource "aws_iam_policy" "worker_policy" {
 #   name        = "worker-policy-${var.cluster_name}"
 #   description = "Worker policy for the ALB Ingress"
@@ -164,6 +160,9 @@ data "aws_iam_policy" "EC2RoleforSSM" {
 #   policy = file("iam-policy.json")
 # }
 
+data "aws_iam_policy" "EC2RoleforSSM" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+}
 
 resource "aws_iam_policy" "eks_policy_alb_controller_ingress" {
   name      = "eks_sa_alb_controller_ingress-k8-${var.cluster_name}"
